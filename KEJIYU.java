@@ -40,7 +40,8 @@ void showHelpDialog() {
             appendGoldText(helpMessage, "8. 世界人口：输入「世界人口」响应较慢\n");
             appendGoldText(helpMessage, "9. 天气查询：输入「天气+城市」如「天气北京」\n");
             appendGoldText(helpMessage, "10. 十宗罪语录：输入「十宗罪」\n");
-            appendGoldText(helpMessage, "11. 土味情话：输入「土味情话」\n\n"); // 新增
+            appendGoldText(helpMessage, "11. 土味情话：输入「土味情话」\n");
+            appendGoldText(helpMessage, "12. 骚话：输入「骚话」\n\n"); // 新增
             
             // 图片类功能
             appendGoldText(helpMessage, "【图片类】\n");
@@ -695,6 +696,38 @@ void getSZZQuote(String talker) {
     }).start();
 }
 
+// 新增：骚话功能
+void getSaoHua(String talker) {
+    new Thread(new Runnable() {
+        public void run() {
+            try {
+                String apiUrl = "https://v.api.aa1.cn/api/api-saohua/index.php?type=json"; // 新增的API
+                java.net.URL url = new java.net.URL(apiUrl);
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(3000);
+                
+                java.io.InputStream is = conn.getInputStream();
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+                
+                // 解析 JSON 数据，只提取 saohua 字段的内容
+                JSONObject jsonObject = new JSONObject(response.toString());
+                String saohua = jsonObject.getString("saohua");
+                
+                sendText(talker, saohua);
+            } catch (Exception e) {
+                sendText(talker, "骚话获取失败，请重试");
+            }
+        }
+    }).start();
+}
+
 boolean onLongClickSendBtn(String text) {
     String trimmedText = text.trim();
     String lowerText = trimmedText.toLowerCase();
@@ -953,6 +986,12 @@ boolean onLongClickSendBtn(String text) {
         return true;
     }
     
+    // 新增：文字类功能，骚话
+    if ("骚话".equals(trimmedText)) {
+        getSaoHua(getTargetTalker());
+        return true;
+    }
+    
     // ======================= 图片类功能 =======================
     if ("晨报".equals(trimmedText)) {
         downloadAndSendImage(getTargetTalker(), "晨报", "https://api.ahfi.cn/api/MorningNews");
@@ -1141,6 +1180,11 @@ void onHandleMsg(Object msg) {
         // 新增：文字类功能，土味情话
         if ("土味情话".equals(c)) {
             getTwQingHua(t);
+        }
+        
+        // 新增：文字类功能，骚话
+        if ("骚话".equals(c)) {
+            getSaoHua(t);
         }
     }
 }
